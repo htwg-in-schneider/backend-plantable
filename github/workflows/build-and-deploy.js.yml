@@ -1,0 +1,58 @@
+name: Build Vue App and Deploy as GitHub Page
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # We only need to build once, so the matrix is removed.
+    steps:
+    - uses: actions/checkout@v4
+    
+    # Use a specific, supported Node.js version for the build
+    - name: Use Node.js 24.x 
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Build Vue App
+      run: npm run build
+    
+    # Upload the build output (usually 'dist') as an artifact
+    - name: Upload production artifact 📤
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: 'dist'
+        
+  deploy:
+    # This job runs only after the 'build' job succeeds
+    needs: build 
+    
+    # Prevents deployment if the push is from a fork or not on a specific branch
+    if: github.ref == 'refs/heads/main' 
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        
+      # The artifact is automatically downloaded in the 'actions/deploy-pages' step
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
