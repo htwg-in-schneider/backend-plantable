@@ -1,6 +1,9 @@
 package com.plantable.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "plants")
@@ -41,6 +44,10 @@ public class Plant {
 
     @Column(name = "origin_region", length = 100)
     private String originRegion;
+
+    @OneToMany(mappedBy = "plant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Tag> tags = new ArrayList<>();
 
     public Plant() {}
 
@@ -93,4 +100,7 @@ public class Plant {
 
     public String getOriginRegion() { return originRegion; }
     public void setOriginRegion(String originRegion) { this.originRegion = originRegion; }
+
+    public List<Tag> getTags() { return tags; }
+    public void setTags(List<Tag> tags) { this.tags = tags; }
 }

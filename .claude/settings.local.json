@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(Remove-Item \"d:\\\\Hochschule\\\\WebTech\\\\backend-plantable\\\\src\\\\main\\\\java\\\\com\\\\plantable\\\\backend\\\\Plant.java\", \"d:\\\\Hochschule\\\\WebTech\\\\backend-plantable\\\\src\\\\main\\\\java\\\\com\\\\plantable\\\\backend\\\\CareLevel.java\", \"d:\\\\Hochschule\\\\WebTech\\\\backend-plantable\\\\src\\\\main\\\\java\\\\com\\\\plantable\\\\backend\\\\PlantController.java\", \"d:\\\\Hochschule\\\\WebTech\\\\backend-plantable\\\\src\\\\main\\\\java\\\\com\\\\plantable\\\\backend\\\\PlantService.java\", \"d:\\\\Hochschule\\\\WebTech\\\\backend-plantable\\\\src\\\\main\\\\java\\\\com\\\\plantable\\\\backend\\\\PlantRepository.java\", \"d:\\\\Hochschule\\\\WebTech\\\\backend-plantable\\\\src\\\\main\\\\java\\\\com\\\\plantable\\\\backend\\\\DataLoader.java\")"
-    ]
-  }
-}
