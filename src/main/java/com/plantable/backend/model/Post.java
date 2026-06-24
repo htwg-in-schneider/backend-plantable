@@ -1,6 +1,6 @@
 package com.plantable.backend.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -23,7 +23,7 @@ public class Post {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "author_id", nullable = false)
-    @JsonBackReference
+    @JsonIgnoreProperties({"posts", "comments"})
     private User author;
 
     @ElementCollection

@@ -4,6 +4,7 @@ import com.plantable.backend.model.Post;
 import com.plantable.backend.service.PostService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -16,6 +17,8 @@ public class PostController {
     public PostController(PostService postService) {
         this.postService = postService;
     }
+
+    record PostRequest(String title, String content, List<String> tags, String imageUrl) {}
 
     @GetMapping
     public ResponseEntity<List<Post>> getAllPosts() {
@@ -37,9 +40,14 @@ public class PostController {
     @PostMapping
     public ResponseEntity<Post> createPost(
             @RequestHeader("X-User-Id") Long userId,
-            @RequestBody Post postData) {
+            @RequestBody PostRequest postData) {
         try {
-            Post created = postService.createPost(userId, postData);
+            Post post = new Post();
+            post.setTitle(postData.title());
+            post.setContent(postData.content());
+            post.setTags(postData.tags() != null ? postData.tags() : new ArrayList<>());
+            post.setImageUrl(postData.imageUrl());
+            Post created = postService.createPost(userId, post);
             return ResponseEntity.ok(created);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
@@ -50,9 +58,14 @@ public class PostController {
     public ResponseEntity<Post> updatePost(
             @PathVariable Long id,
             @RequestHeader("X-User-Id") Long userId,
-            @RequestBody Post updatedData) {
+            @RequestBody PostRequest postData) {
         try {
-            return postService.updatePost(id, userId, updatedData)
+            Post post = new Post();
+            post.setTitle(postData.title());
+            post.setContent(postData.content());
+            post.setTags(postData.tags() != null ? postData.tags() : new ArrayList<>());
+            post.setImageUrl(postData.imageUrl());
+            return postService.updatePost(id, userId, post)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
         } catch (IllegalAccessError e) {

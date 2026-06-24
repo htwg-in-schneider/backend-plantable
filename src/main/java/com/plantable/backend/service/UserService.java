@@ -3,6 +3,7 @@ package com.plantable.backend.service;
 import com.plantable.backend.model.User;
 import com.plantable.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -44,4 +45,21 @@ public class UserService {
     public User save(User user) {
         return userRepository.save(user);
     }
+    public List<User> getAllUsers() {
+    return userRepository.findAll();
+}
+
+public Optional<User> updateUser(Long id, String name, Boolean isAdmin) {
+    return userRepository.findById(id).map(user -> {
+        if (name != null) user.setName(name);
+        if (isAdmin != null) user.setIsAdmin(isAdmin);
+        return userRepository.save(user);
+    });
+}
+
+public boolean deleteUser(Long id) {
+    if (!userRepository.existsById(id)) return false;
+    userRepository.deleteById(id);
+    return true;
+}
 }

@@ -4,6 +4,7 @@ import com.plantable.backend.model.User;
 import com.plantable.backend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -35,6 +36,28 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping
+public ResponseEntity<List<User>> getAllUsers() {
+    return ResponseEntity.ok(userService.getAllUsers());
+}
+
+@PutMapping("/{id}")
+public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequest request) {
+    return userService.updateUser(id, request.name(), request.isAdmin())
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+}
+
+@DeleteMapping("/{id}")
+public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    if (userService.deleteUser(id)) {
+        return ResponseEntity.noContent().build();
+    }
+    return ResponseEntity.notFound().build();
+}
+
+record UpdateUserRequest(String name, Boolean isAdmin) {}
 
     record UserRequest(String auth0Id, String email, String name) {}
 }

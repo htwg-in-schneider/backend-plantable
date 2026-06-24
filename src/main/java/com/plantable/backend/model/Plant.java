@@ -1,5 +1,6 @@
 package com.plantable.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.util.ArrayList;
@@ -45,9 +46,37 @@ public class Plant {
     @Column(name = "origin_region", length = 100)
     private String originRegion;
 
+    @Column(name = "price", nullable = false)
+    private Double price;
+
     @OneToMany(mappedBy = "plant", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Tag> tags = new ArrayList<>();
+
+    @OneToMany(mappedBy = "plant", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    private List<UserPlant> userPlants = new ArrayList<>();
+
+    @Column(name = "default_watering_interval_days")
+    private Integer defaultWateringIntervalDays;
+
+    @Column(name = "default_misting_interval_days")
+    private Integer defaultMistingIntervalDays;
+
+    @Column(name = "default_fertilizing_interval_days")
+    private Integer defaultFertilizingIntervalDays;
+
+    @Column(name = "default_leaf_cleaning_interval_days")
+    private Integer defaultLeafCleaningIntervalDays;
+
+    @Column(name = "default_repotting_interval_days")
+    private Integer defaultRepottingIntervalDays;
+
+    @Column(name = "default_pruning_interval_days")
+    private Integer defaultPruningIntervalDays;
+
+    @Column(name = "default_pest_check_interval_days")
+    private Integer defaultPestCheckIntervalDays;
 
     public Plant() {}
 
@@ -101,6 +130,30 @@ public class Plant {
     public String getOriginRegion() { return originRegion; }
     public void setOriginRegion(String originRegion) { this.originRegion = originRegion; }
 
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
+
     public List<Tag> getTags() { return tags; }
     public void setTags(List<Tag> tags) { this.tags = tags; }
+
+    public Integer getDefaultWateringIntervalDays() { return defaultWateringIntervalDays; }
+    public void setDefaultWateringIntervalDays(Integer defaultWateringIntervalDays) { this.defaultWateringIntervalDays = defaultWateringIntervalDays; }
+
+    public Integer getDefaultMistingIntervalDays() { return defaultMistingIntervalDays; }
+    public void setDefaultMistingIntervalDays(Integer defaultMistingIntervalDays) { this.defaultMistingIntervalDays = defaultMistingIntervalDays; }
+
+    public Integer getDefaultFertilizingIntervalDays() { return defaultFertilizingIntervalDays; }
+    public void setDefaultFertilizingIntervalDays(Integer defaultFertilizingIntervalDays) { this.defaultFertilizingIntervalDays = defaultFertilizingIntervalDays; }
+
+    public Integer getDefaultLeafCleaningIntervalDays() { return defaultLeafCleaningIntervalDays; }
+    public void setDefaultLeafCleaningIntervalDays(Integer defaultLeafCleaningIntervalDays) { this.defaultLeafCleaningIntervalDays = defaultLeafCleaningIntervalDays; }
+
+    public Integer getDefaultRepottingIntervalDays() { return defaultRepottingIntervalDays; }
+    public void setDefaultRepottingIntervalDays(Integer defaultRepottingIntervalDays) { this.defaultRepottingIntervalDays = defaultRepottingIntervalDays; }
+
+    public Integer getDefaultPruningIntervalDays() { return defaultPruningIntervalDays; }
+    public void setDefaultPruningIntervalDays(Integer defaultPruningIntervalDays) { this.defaultPruningIntervalDays = defaultPruningIntervalDays; }
+
+    public Integer getDefaultPestCheckIntervalDays() { return defaultPestCheckIntervalDays; }
+    public void setDefaultPestCheckIntervalDays(Integer defaultPestCheckIntervalDays) { this.defaultPestCheckIntervalDays = defaultPestCheckIntervalDays; }
 }
