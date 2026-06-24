@@ -1,10 +1,7 @@
 package com.plantable.backend.config;
 
-import com.plantable.backend.model.CareLevel;
-import com.plantable.backend.model.LightRequirement;
-import com.plantable.backend.model.Plant;
-import com.plantable.backend.model.Tag;
-import com.plantable.backend.repository.PlantRepository;
+import com.plantable.backend.model.*;
+import com.plantable.backend.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -14,9 +11,16 @@ import java.util.List;
 public class DataLoader implements CommandLineRunner {
 
     private final PlantRepository plantRepository;
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
-    public DataLoader(PlantRepository plantRepository) {
+    public DataLoader(PlantRepository plantRepository, UserRepository userRepository,
+                      PostRepository postRepository, CommentRepository commentRepository) {
         this.plantRepository = plantRepository;
+        this.userRepository = userRepository;
+        this.postRepository = postRepository;
+        this.commentRepository = commentRepository;
     }
 
     @Override
@@ -24,6 +28,16 @@ public class DataLoader implements CommandLineRunner {
         if (plantRepository.count() > 0) {
             return;
         }
+
+        // Create admin and test users
+        User admin = new User("auth0|admin123", "admin@plantable.local", "Admin User");
+        admin.setIsAdmin(true);
+        userRepository.save(admin);
+
+        User testUser1 = new User("auth0|user123", "user1@plantable.local", "Max Grün");
+        User testUser2 = new User("auth0|user456", "user2@plantable.local", "Emma Schmidt");
+        userRepository.save(testUser1);
+        userRepository.save(testUser2);
 
         Plant monstera = new Plant(
             "Monstera deliciosa", "Fensterblatt", "monstera-deliciosa",
@@ -174,6 +188,40 @@ public class DataLoader implements CommandLineRunner {
 
         plantRepository.saveAll(plants);
         System.out.println(plants.size() + " Pflanzen geladen");
+
+        // Create community posts
+        Post post1 = new Post(
+            "Tipps zur Pflege von Monstera",
+            "Meine Monstera wächst prächtig! Hier sind meine besten Tipps:\n\n1. Helles, indirektes Licht ist ideal\n2. Gießen, wenn die oberste Erdschicht trocken ist\n3. Jeden Monat mit Langzeitdünger versorgen\n4. Moosstock hilft ihr hochzuwachsen\n\nWelche Erfahrungen habt ihr gemacht?",
+            testUser1
+        );
+        post1.setTags(List.of("Monstera", "Pflanzenpflege", "Anfänger-Tipps"));
+        postRepository.save(post1);
+
+        Post post2 = new Post(
+            "Habt ihr schonmal Stecklinge vermehrt?",
+            "Ich bin begeistert von der Vermehrung über Stecklinge! Es ist so einfach und man kann seine Pflanzensammlung schnell vergrößern. \n\nBeste Erfahrungen habe ich mit Philodendron und Efeutute gemacht. Bei welchen Pflanzen habt ihr schon erfolgreich Stecklinge gezogen?",
+            testUser2
+        );
+        post2.setTags(List.of("Vermehrung", "Stecklinge", "Tipps"));
+        postRepository.save(post2);
+
+        // Create comments
+        Comment comment1 = new Comment(
+            "Danke für die Tipps! Ich habe das gerade ausprobiert und es funktioniert wirklich gut.",
+            testUser2,
+            post1
+        );
+        commentRepository.save(comment1);
+
+        Comment comment2 = new Comment(
+            "Bei mir klappt die Vermehrung über Stecklinge auch sehr gut. Braucht einfach nur Geduld!",
+            testUser1,
+            post2
+        );
+        commentRepository.save(comment2);
+
+        System.out.println("Community-Daten geladen: 1 Admin-User, 2 Test-User, 2 Posts, 2 Kommentare");
     }
 
     private void addTags(Plant plant, String... names) {
