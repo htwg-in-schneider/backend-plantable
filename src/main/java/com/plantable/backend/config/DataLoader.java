@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Component
 public class DataLoader implements CommandLineRunner {
@@ -29,19 +30,9 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (plantRepository.count() > 0) {
-            return;
-        }
-
-        // Create admin and test users
-        User admin = new User("auth0|6a3bab58bda5fa3340b498e4", "matosnico02@gmail.com", "Admin User");
-        admin.setIsAdmin(true);
-        userRepository.save(admin);
-
-        User testUser1 = new User("auth0|user123", "user1@plantable.local", "Max Grün");
-        User testUser2 = new User("auth0|user456", "user2@plantable.local", "Emma Schmidt");
-        userRepository.save(testUser1);
-        userRepository.save(testUser2);
+        User admin = upsertUser("auth0|6a3bab58bda5fa3340b498e4", "matosnico02@gmail.com", "Admin User", true);
+        User testUser1 = upsertUser("auth0|user123", "user1@plantable.local", "Max Grün", false);
+        User testUser2 = upsertUser("auth0|user456", "user2@plantable.local", "Emma Schmidt", false);
 
         Plant monstera = new Plant(
             "Monstera deliciosa", "Fensterblatt", "monstera-deliciosa",
@@ -223,99 +214,111 @@ public class DataLoader implements CommandLineRunner {
         setIntervals(hoya, 7, null, 30, null, 730, 365, 90);
         hoya.setPrice(22.99);
 
-        List<Plant> plants = List.of(
-            monstera, calathea, sansevieria, ficusLyrata, senecio, scindapsus,
-            pilea, strelitzia, alocasia, epipremnum, zamioculcas, spathiphyllum,
-            chlorophytum, aloe, ficusElastica, philodendron, maranta, crassula,
-            nephrolepis, hoya
-        );
+        for (Plant p : List.of(
+                monstera, calathea, sansevieria, ficusLyrata, senecio, scindapsus,
+                pilea, strelitzia, alocasia, epipremnum, zamioculcas, spathiphyllum,
+                chlorophytum, aloe, ficusElastica, philodendron, maranta, crassula,
+                nephrolepis, hoya)) {
+            upsertPlant(p.getSlug(), () -> p);
+        }
+        // Re-fetch saved instances so IDs are set for UserPlant references
+        monstera = plantRepository.findBySlug("monstera-deliciosa").get();
+        pilea = plantRepository.findBySlug("pilea-peperomioides").get();
+        sansevieria = plantRepository.findBySlug("sansevieria-laurentii").get();
+        System.out.println("20 Pflanzen geprüft/geladen");
 
-        plantRepository.saveAll(plants);
-        System.out.println(plants.size() + " Pflanzen geladen");
+        // Community posts – only seed if testUser1 has no posts yet
+        if (postRepository.findByAuthorIdOrderByCreatedAtDesc(testUser1.getId()).isEmpty()) {
+            Post post1 = new Post(
+                "Tipps zur Pflege von Monstera",
+                "Meine Monstera wächst prächtig! Hier sind meine besten Tipps:\n\n1. Helles, indirektes Licht ist ideal\n2. Gießen, wenn die oberste Erdschicht trocken ist\n3. Jeden Monat mit Langzeitdünger versorgen\n4. Moosstock hilft ihr hochzuwachsen\n\nWelche Erfahrungen habt ihr gemacht?",
+                testUser1
+            );
+            post1.setTags(List.of("Monstera", "Pflanzenpflege", "Anfänger-Tipps"));
+            postRepository.save(post1);
 
-        // Create community posts
-        Post post1 = new Post(
-            "Tipps zur Pflege von Monstera",
-            "Meine Monstera wächst prächtig! Hier sind meine besten Tipps:\n\n1. Helles, indirektes Licht ist ideal\n2. Gießen, wenn die oberste Erdschicht trocken ist\n3. Jeden Monat mit Langzeitdünger versorgen\n4. Moosstock hilft ihr hochzuwachsen\n\nWelche Erfahrungen habt ihr gemacht?",
-            testUser1
-        );
-        post1.setTags(List.of("Monstera", "Pflanzenpflege", "Anfänger-Tipps"));
-        postRepository.save(post1);
+            Post post2 = new Post(
+                "Habt ihr schonmal Stecklinge vermehrt?",
+                "Ich bin begeistert von der Vermehrung über Stecklinge! Es ist so einfach und man kann seine Pflanzensammlung schnell vergrößern. \n\nBeste Erfahrungen habe ich mit Philodendron und Efeutute gemacht. Bei welchen Pflanzen habt ihr schon erfolgreich Stecklinge gezogen?",
+                testUser2
+            );
+            post2.setTags(List.of("Vermehrung", "Stecklinge", "Tipps"));
+            postRepository.save(post2);
 
-        Post post2 = new Post(
-            "Habt ihr schonmal Stecklinge vermehrt?",
-            "Ich bin begeistert von der Vermehrung über Stecklinge! Es ist so einfach und man kann seine Pflanzensammlung schnell vergrößern. \n\nBeste Erfahrungen habe ich mit Philodendron und Efeutute gemacht. Bei welchen Pflanzen habt ihr schon erfolgreich Stecklinge gezogen?",
-            testUser2
-        );
-        post2.setTags(List.of("Vermehrung", "Stecklinge", "Tipps"));
-        postRepository.save(post2);
+            Comment comment1 = new Comment(
+                "Danke für die Tipps! Ich habe das gerade ausprobiert und es funktioniert wirklich gut.",
+                testUser2,
+                post1
+            );
+            commentRepository.save(comment1);
 
-        // Create comments
-        Comment comment1 = new Comment(
-            "Danke für die Tipps! Ich habe das gerade ausprobiert und es funktioniert wirklich gut.",
-            testUser2,
-            post1
-        );
-        commentRepository.save(comment1);
+            Comment comment2 = new Comment(
+                "Bei mir klappt die Vermehrung über Stecklinge auch sehr gut. Braucht einfach nur Geduld!",
+                testUser1,
+                post2
+            );
+            commentRepository.save(comment2);
 
-        Comment comment2 = new Comment(
-            "Bei mir klappt die Vermehrung über Stecklinge auch sehr gut. Braucht einfach nur Geduld!",
-            testUser1,
-            post2
-        );
-        commentRepository.save(comment2);
+            System.out.println("Community-Daten geladen: 2 Posts, 2 Kommentare");
+        }
 
-        System.out.println("Community-Daten geladen: 1 Admin-User, 2 Test-User, 2 Posts, 2 Kommentare");
+        // Admin UserPlants – only seed if admin has none yet
+        if (userPlantRepository.findByUserId(admin.getId()).isEmpty()) {
+            LocalDate today = LocalDate.now();
 
-        // ── Admin-Testdaten: Pflanzen mit fälligen und überfälligen Aufgaben ──
-        LocalDate today = LocalDate.now();
+            UserPlant monty = new UserPlant();
+            monty.setUser(admin);
+            monty.setPlant(monstera);
+            monty.setNickname("Monty");
+            monty.setAcquiredAt(today.minusDays(30));
+            monty.setWateringIntervalDays(7);
+            monty.setLastWateredAt(today.minusDays(10));
+            monty.setMistingIntervalDays(3);
+            monty.setLastMistedAt(today.minusDays(5));
+            monty.setFertilizingIntervalDays(21);
+            monty.setLeafCleaningIntervalDays(30);
+            monty.setRepottingIntervalDays(365);
+            monty.setPruningIntervalDays(180);
+            monty.setPestCheckIntervalDays(90);
+            userPlantRepository.save(monty);
 
-        // Monty (Monstera) – seit 30 Tagen, mehrere überfällige Aufgaben
-        UserPlant monty = new UserPlant();
-        monty.setUser(admin);
-        monty.setPlant(monstera);
-        monty.setNickname("Monty");
-        monty.setAcquiredAt(today.minusDays(30));
-        monty.setWateringIntervalDays(7);
-        monty.setLastWateredAt(today.minusDays(10));     // fällig: heute-3  → OVERDUE
-        monty.setMistingIntervalDays(3);
-        monty.setLastMistedAt(today.minusDays(5));       // fällig: heute-2  → OVERDUE
-        monty.setFertilizingIntervalDays(21);
-        // lastFertilizedAt = null → base = acquiredAt (heute-30), fällig: heute-9 → OVERDUE
-        monty.setLeafCleaningIntervalDays(30);
-        // lastLeafCleanedAt = null → base = acquiredAt (heute-30), fällig: heute   → DUE
-        monty.setRepottingIntervalDays(365);             // fällig: heute+335 → UPCOMING
-        monty.setPruningIntervalDays(180);               // fällig: heute+150 → UPCOMING
-        monty.setPestCheckIntervalDays(90);              // fällig: heute+60  → UPCOMING
-        userPlantRepository.save(monty);
+            UserPlant pili = new UserPlant();
+            pili.setUser(admin);
+            pili.setPlant(pilea);
+            pili.setNickname("Pili");
+            pili.setAcquiredAt(today.minusDays(7));
+            pili.setWateringIntervalDays(7);
+            pili.setFertilizingIntervalDays(21);
+            pili.setRepottingIntervalDays(365);
+            pili.setPestCheckIntervalDays(90);
+            userPlantRepository.save(pili);
 
-        // Pili (Pilea) – seit 7 Tagen, Gießen heute fällig
-        UserPlant pili = new UserPlant();
-        pili.setUser(admin);
-        pili.setPlant(pilea);
-        pili.setNickname("Pili");
-        pili.setAcquiredAt(today.minusDays(7));
-        pili.setWateringIntervalDays(7);
-        // lastWateredAt = null → base = acquiredAt (heute-7), fällig: heute → DUE
-        pili.setFertilizingIntervalDays(21);             // fällig: heute+14  → UPCOMING
-        pili.setRepottingIntervalDays(365);              // fällig: heute+358 → UPCOMING
-        pili.setPestCheckIntervalDays(90);               // fällig: heute+83  → UPCOMING
-        userPlantRepository.save(pili);
+            UserPlant sanse = new UserPlant();
+            sanse.setUser(admin);
+            sanse.setPlant(sansevieria);
+            sanse.setNickname("Sanse");
+            sanse.setAcquiredAt(today.minusDays(3));
+            sanse.setWateringIntervalDays(21);
+            sanse.setFertilizingIntervalDays(60);
+            sanse.setLeafCleaningIntervalDays(30);
+            sanse.setRepottingIntervalDays(730);
+            sanse.setPestCheckIntervalDays(90);
+            userPlantRepository.save(sanse);
 
-        // Sanse (Bogenhanf) – kürzlich hinzugefügt, alles demnächst
-        UserPlant sanse = new UserPlant();
-        sanse.setUser(admin);
-        sanse.setPlant(sansevieria);
-        sanse.setNickname("Sanse");
-        sanse.setAcquiredAt(today.minusDays(3));
-        sanse.setWateringIntervalDays(21);               // fällig: heute+18  → UPCOMING
-        sanse.setFertilizingIntervalDays(60);            // fällig: heute+57  → UPCOMING
-        sanse.setLeafCleaningIntervalDays(30);           // fällig: heute+27  → UPCOMING
-        sanse.setRepottingIntervalDays(730);             // fällig: heute+727 → UPCOMING
-        sanse.setPestCheckIntervalDays(90);              // fällig: heute+87  → UPCOMING
-        userPlantRepository.save(sanse);
+            System.out.println("Admin-Testpflanzen geladen: Monty, Pili, Sanse");
+        }
+    }
 
-        System.out.println("Admin-Testpflanzen geladen: Monty (OVERDUE/DUE), Pili (DUE), Sanse (UPCOMING)");
+    private User upsertUser(String auth0Id, String email, String name, boolean isAdmin) {
+        return userRepository.findByAuth0Id(auth0Id).orElseGet(() -> {
+            User u = new User(auth0Id, email, name);
+            if (isAdmin) u.setIsAdmin(true);
+            return userRepository.save(u);
+        });
+    }
+
+    private Plant upsertPlant(String slug, Supplier<Plant> creator) {
+        return plantRepository.findBySlug(slug).orElseGet(() -> plantRepository.save(creator.get()));
     }
 
     private void addTags(Plant plant, String... names) {
