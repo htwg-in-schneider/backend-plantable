@@ -46,7 +46,7 @@ public class Plant {
     @Column(name = "origin_region", length = 100)
     private String originRegion;
 
-    @Column(name = "price", nullable = false)
+    @Column(name = "price")
     private Double price;
 
     @OneToMany(mappedBy = "plant", cascade = CascadeType.ALL, orphanRemoval = true)
