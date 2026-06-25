@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.function.Supplier;
 
 @Component
 public class DataLoader implements CommandLineRunner {
@@ -30,9 +29,17 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        User admin = upsertUser("auth0|6a3bab58bda5fa3340b498e4", "matosnico02@gmail.com", "Admin User", true);
-        User testUser1 = upsertUser("auth0|user123", "user1@plantable.local", "Max Grün", false);
-        User testUser2 = upsertUser("auth0|user456", "user2@plantable.local", "Emma Schmidt", false);
+        commentRepository.deleteAll();
+        userPlantRepository.deleteAll();
+        postRepository.deleteAll();
+        plantRepository.deleteAll();
+        userRepository.deleteAll();
+
+        User admin = createUser("auth0|6a3bab58bda5fa3340b498e4", "matosnico02@gmail.com", "Admin User", true);
+        User testUser1 = createUser("auth0|user123", "user1@plantable.local", "Max Grün", false);
+        User testUser2 = createUser("auth0|user456", "user2@plantable.local", "Emma Schmidt", false);
+        // auth0Id muss nach Auth0-Registrierung mit der echten ID ersetzt werden
+        User plantableUser = createUser("auth0|user789", "User@plantable.com", "Plantable User", false);
 
         Plant monstera = new Plant(
             "Monstera deliciosa", "Fensterblatt", "monstera-deliciosa",
@@ -214,21 +221,29 @@ public class DataLoader implements CommandLineRunner {
         setIntervals(hoya, 7, null, 30, null, 730, 365, 90);
         hoya.setPrice(22.99);
 
-        for (Plant p : List.of(
-                monstera, calathea, sansevieria, ficusLyrata, senecio, scindapsus,
-                pilea, strelitzia, alocasia, epipremnum, zamioculcas, spathiphyllum,
-                chlorophytum, aloe, ficusElastica, philodendron, maranta, crassula,
-                nephrolepis, hoya)) {
-            upsertPlant(p.getSlug(), () -> p);
-        }
-        // Re-fetch saved instances so IDs are set for UserPlant references
-        monstera = plantRepository.findBySlug("monstera-deliciosa").get();
-        pilea = plantRepository.findBySlug("pilea-peperomioides").get();
-        sansevieria = plantRepository.findBySlug("sansevieria-laurentii").get();
-        System.out.println("20 Pflanzen geprüft/geladen");
+        monstera = plantRepository.save(monstera);
+        calathea = plantRepository.save(calathea);
+        sansevieria = plantRepository.save(sansevieria);
+        ficusLyrata = plantRepository.save(ficusLyrata);
+        senecio = plantRepository.save(senecio);
+        scindapsus = plantRepository.save(scindapsus);
+        pilea = plantRepository.save(pilea);
+        strelitzia = plantRepository.save(strelitzia);
+        alocasia = plantRepository.save(alocasia);
+        epipremnum = plantRepository.save(epipremnum);
+        zamioculcas = plantRepository.save(zamioculcas);
+        spathiphyllum = plantRepository.save(spathiphyllum);
+        chlorophytum = plantRepository.save(chlorophytum);
+        aloe = plantRepository.save(aloe);
+        ficusElastica = plantRepository.save(ficusElastica);
+        philodendron = plantRepository.save(philodendron);
+        maranta = plantRepository.save(maranta);
+        crassula = plantRepository.save(crassula);
+        nephrolepis = plantRepository.save(nephrolepis);
+        hoya = plantRepository.save(hoya);
+        System.out.println("20 Pflanzen geladen");
 
-        // Community posts – only seed if testUser1 has no posts yet
-        if (postRepository.findByAuthorIdOrderByCreatedAtDesc(testUser1.getId()).isEmpty()) {
+        {
             Post post1 = new Post(
                 "Tipps zur Pflege von Monstera",
                 "Meine Monstera wächst prächtig! Hier sind meine besten Tipps:\n\n1. Helles, indirektes Licht ist ideal\n2. Gießen, wenn die oberste Erdschicht trocken ist\n3. Jeden Monat mit Langzeitdünger versorgen\n4. Moosstock hilft ihr hochzuwachsen\n\nWelche Erfahrungen habt ihr gemacht?",
@@ -236,34 +251,50 @@ public class DataLoader implements CommandLineRunner {
             );
             post1.setTags(List.of("Monstera", "Pflanzenpflege", "Anfänger-Tipps"));
             postRepository.save(post1);
+            commentRepository.save(new Comment("Danke für die Tipps! Meine Monstera hat endlich neue Blätter getrieben.", testUser2, post1));
+            commentRepository.save(new Comment("Den Moosstock kann ich auch nur empfehlen – macht wirklich einen Unterschied!", plantableUser, post1));
 
             Post post2 = new Post(
                 "Habt ihr schonmal Stecklinge vermehrt?",
-                "Ich bin begeistert von der Vermehrung über Stecklinge! Es ist so einfach und man kann seine Pflanzensammlung schnell vergrößern. \n\nBeste Erfahrungen habe ich mit Philodendron und Efeutute gemacht. Bei welchen Pflanzen habt ihr schon erfolgreich Stecklinge gezogen?",
+                "Ich bin begeistert von der Vermehrung über Stecklinge! Es ist so einfach und man kann seine Pflanzensammlung schnell vergrößern.\n\nBeste Erfahrungen habe ich mit Philodendron und Efeutute gemacht. Bei welchen Pflanzen habt ihr schon erfolgreich Stecklinge gezogen?",
                 testUser2
             );
             post2.setTags(List.of("Vermehrung", "Stecklinge", "Tipps"));
             postRepository.save(post2);
+            commentRepository.save(new Comment("Bei mir klappt die Vermehrung über Stecklinge auch sehr gut. Braucht einfach nur Geduld!", testUser1, post2));
 
-            Comment comment1 = new Comment(
-                "Danke für die Tipps! Ich habe das gerade ausprobiert und es funktioniert wirklich gut.",
-                testUser2,
-                post1
+            Post post3 = new Post(
+                "Meine Calathea lässt die Blätter hängen – was tun?",
+                "Ich habe seit zwei Wochen eine Calathea orbifolia und die Blätter hängen immer mehr nach unten. Ich gieße sie alle 5 Tage und stelle sie ans Nordfenster.\n\nHat jemand eine Idee woran das liegen könnte? Zu wenig Licht? Zu viel Wasser?",
+                plantableUser
             );
-            commentRepository.save(comment1);
+            post3.setTags(List.of("Calathea", "Hilfe", "Pflanzenpflege"));
+            postRepository.save(post3);
+            commentRepository.save(new Comment("Calatheen mögen keine Staunässe – lass die Erde zwischen den Wassergaben etwas antrocknen. Nordfenster ist leider auch zu dunkel.", testUser1, post3));
+            commentRepository.save(new Comment("Ich hatte dasselbe Problem. Habe sie ans Ostfenster gestellt und seitdem erholt sie sich super.", testUser2, post3));
 
-            Comment comment2 = new Comment(
-                "Bei mir klappt die Vermehrung über Stecklinge auch sehr gut. Braucht einfach nur Geduld!",
-                testUser1,
-                post2
+            Post post4 = new Post(
+                "Welche Pflanzen eignen sich fürs Badezimmer?",
+                "Unser Badezimmer hat nur ein kleines Fenster und ist recht feucht. Ich suche Pflanzen, die dort trotzdem gedeihen.\n\nHabe schon Farn und Efeutute im Kopf – habt ihr noch andere Ideen?",
+                testUser2
             );
-            commentRepository.save(comment2);
+            post4.setTags(List.of("Badezimmer", "Anfänger", "Schattenpflanzen"));
+            postRepository.save(post4);
+            commentRepository.save(new Comment("Schwertfarn (Nephrolepis) ist perfekt fürs Bad – liebt die hohe Luftfeuchtigkeit!", plantableUser, post4));
 
-            System.out.println("Community-Daten geladen: 2 Posts, 2 Kommentare");
+            Post post5 = new Post(
+                "Frühjahrsumtopfen – meine Erfahrungen",
+                "Dieses Jahr habe ich zum ersten Mal alle meine Pflanzen im Frühling umgetopft und der Unterschied ist enorm!\n\nMeine Tipps:\n- Frische Erde mit Perlite mischen für bessere Drainage\n- Topf nur eine Größe größer wählen\n- Nach dem Umtopfen 1-2 Wochen nicht düngen\n\nHat jemand noch Ergänzungen?",
+                testUser1
+            );
+            post5.setTags(List.of("Umtopfen", "Frühjahr", "Pflanzenpflege", "Tipps"));
+            postRepository.save(post5);
+            commentRepository.save(new Comment("Sehr hilfreiche Zusammenfassung! Ich füge noch hinzu: bei empfindlichen Pflanzen die Wurzeln kurz abspülen, um alte Erde zu entfernen.", testUser2, post5));
+
+            System.out.println("Community-Daten geladen: 5 Posts, 8 Kommentare");
         }
 
-        // Admin UserPlants – only seed if admin has none yet
-        if (userPlantRepository.findByUserId(admin.getId()).isEmpty()) {
+        {
             LocalDate today = LocalDate.now();
 
             UserPlant monty = new UserPlant();
@@ -307,18 +338,64 @@ public class DataLoader implements CommandLineRunner {
 
             System.out.println("Admin-Testpflanzen geladen: Monty, Pili, Sanse");
         }
+
+        {
+            LocalDate today = LocalDate.now();
+
+            // Calathea – Gießen & Besprühen fällig
+            UserPlant cala = new UserPlant();
+            cala.setUser(plantableUser);
+            cala.setPlant(calathea);
+            cala.setNickname("Cala");
+            cala.setAcquiredAt(today.minusDays(20));
+            cala.setWateringIntervalDays(5);
+            cala.setLastWateredAt(today.minusDays(6));
+            cala.setMistingIntervalDays(2);
+            cala.setLastMistedAt(today.minusDays(4));
+            cala.setFertilizingIntervalDays(14);
+            cala.setRepottingIntervalDays(365);
+            cala.setPestCheckIntervalDays(90);
+            userPlantRepository.save(cala);
+
+            // Ficus lyrata – Gießen & Blätter putzen fällig
+            UserPlant ficus = new UserPlant();
+            ficus.setUser(plantableUser);
+            ficus.setPlant(ficusLyrata);
+            ficus.setNickname("Figaro");
+            ficus.setAcquiredAt(today.minusDays(60));
+            ficus.setWateringIntervalDays(7);
+            ficus.setLastWateredAt(today.minusDays(9));
+            ficus.setFertilizingIntervalDays(21);
+            ficus.setLastFertilizedAt(today.minusDays(22));
+            ficus.setLeafCleaningIntervalDays(14);
+            ficus.setLastLeafCleanedAt(today.minusDays(16));
+            ficus.setRepottingIntervalDays(365);
+            ficus.setPestCheckIntervalDays(90);
+            userPlantRepository.save(ficus);
+
+            // Nephrolepis – alle Pflegeaufgaben fällig
+            UserPlant farn = new UserPlant();
+            farn.setUser(plantableUser);
+            farn.setPlant(nephrolepis);
+            farn.setNickname("Ferdi");
+            farn.setAcquiredAt(today.minusDays(14));
+            farn.setWateringIntervalDays(3);
+            farn.setLastWateredAt(today.minusDays(4));
+            farn.setMistingIntervalDays(2);
+            farn.setLastMistedAt(today.minusDays(3));
+            farn.setFertilizingIntervalDays(14);
+            farn.setRepottingIntervalDays(365);
+            farn.setPestCheckIntervalDays(90);
+            userPlantRepository.save(farn);
+
+            System.out.println("Plantable-User-Pflanzen geladen: Cala, Figaro, Ferdi");
+        }
     }
 
-    private User upsertUser(String auth0Id, String email, String name, boolean isAdmin) {
-        return userRepository.findByAuth0Id(auth0Id).orElseGet(() -> {
-            User u = new User(auth0Id, email, name);
-            if (isAdmin) u.setIsAdmin(true);
-            return userRepository.save(u);
-        });
-    }
-
-    private Plant upsertPlant(String slug, Supplier<Plant> creator) {
-        return plantRepository.findBySlug(slug).orElseGet(() -> plantRepository.save(creator.get()));
+    private User createUser(String auth0Id, String email, String name, boolean isAdmin) {
+        User u = new User(auth0Id, email, name);
+        if (isAdmin) u.setIsAdmin(true);
+        return userRepository.save(u);
     }
 
     private void addTags(Plant plant, String... names) {
