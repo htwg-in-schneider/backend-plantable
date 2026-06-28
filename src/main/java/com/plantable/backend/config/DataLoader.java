@@ -39,7 +39,7 @@ public class DataLoader implements CommandLineRunner {
         User testUser1 = createUser("auth0|user123", "user1@plantable.local", "Max Grün", false);
         User testUser2 = createUser("auth0|user456", "user2@plantable.local", "Emma Schmidt", false);
         // auth0Id muss nach Auth0-Registrierung mit der echten ID ersetzt werden
-        User plantableUser = createUser("auth0|user789", "User@plantable.com", "Plantable User", false);
+        User plantableUser = createUser("auth0|6a3bab95de2d7b7268521392", "User@plantable.com", "Plantable User", false);
 
         Plant monstera = new Plant(
             "Monstera deliciosa", "Fensterblatt", "monstera-deliciosa",
